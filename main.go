@@ -16,12 +16,12 @@ import (
 
 func Init() (*pgx.Conn, error) {
 	conn, err := pgx.Connect(context.Background(), os.Getenv("DB_URL"))
-
+	// log.Println(os.Getenv("DB_URL"))
 	if err != nil {
 		fmt.Fprint(os.Stderr, "unable to connect to the database")
 		os.Exit(1)
 	}
-	initSql, err := os.ReadFile("sq/schema.sql")
+	initSql, err := os.ReadFile("sql/schema.sql")
 	if err != nil {
 		log.Printf("Error while loading the file: %v", err)
 		return nil, err
