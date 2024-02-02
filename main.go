@@ -7,6 +7,8 @@ import (
 	"net/http"
 	"os"
 
+	"github.com/ashbeelghouri/aqary-assignment/handlers"
+	"github.com/ashbeelghouri/aqary-assignment/internal/database"
 	"github.com/gin-gonic/gin"
 	"github.com/jackc/pgx/v5"
 	"github.com/joho/godotenv"
@@ -40,17 +42,22 @@ func main() {
 	if err != nil {
 		log.Fatal("Can not load env file!")
 	}
-	// conn, err := Init()
-	// store := database.New(conn)
+	conn, err := Init()
+	if err != nil {
+		panic("can not initialize the database")
+	}
+	store := database.New(conn)
+
+	userHandler := handlers.NewUserHandler(conn, store, context.Background())
 
 	router := gin.Default()
-
-	// defer conn.Close(context.Background())
-
 	router.GET("/", func(c *gin.Context) {
 		c.JSON(http.StatusOK, gin.H{
 			"msg": "connected",
 		})
 	})
 
+	router.POST("/api/users", userHandler.CreateUser)
+
+	router.Run(":8080")
 }
