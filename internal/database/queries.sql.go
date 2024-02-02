@@ -58,19 +58,18 @@ func (q *Queries) GetUserByPhone(ctx context.Context, phoneNumber string) (User,
 const updateUserOTP = `-- name: UpdateUserOTP :one
 UPDATE users
 SET otp = $2,
-    otp_expiration_time  = $3
+    otp_expiration_time  = NOW() + INTERVAL '1 minute'
 WHERE phone_number = $1
 RETURNING id, name, phone_number, otp, otp_expiration_time
 `
 
 type UpdateUserOTPParams struct {
-	PhoneNumber       string           `json:"phone_number"`
-	Otp               pgtype.Text      `json:"otp"`
-	OtpExpirationTime pgtype.Timestamp `json:"otp_expiration_time"`
+	PhoneNumber string      `json:"phone_number"`
+	Otp         pgtype.Text `json:"otp"`
 }
 
 func (q *Queries) UpdateUserOTP(ctx context.Context, arg UpdateUserOTPParams) (User, error) {
-	row := q.db.QueryRow(ctx, updateUserOTP, arg.PhoneNumber, arg.Otp, arg.OtpExpirationTime)
+	row := q.db.QueryRow(ctx, updateUserOTP, arg.PhoneNumber, arg.Otp)
 	var i User
 	err := row.Scan(
 		&i.ID,

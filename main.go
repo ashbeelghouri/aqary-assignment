@@ -58,6 +58,7 @@ func main() {
 	})
 
 	router.POST("/api/users", userHandler.CreateUser)
+	router.POST("/api/users/generateotp", userHandler.GenerateOTP)
 
 	router.Run(":8080")
 }
