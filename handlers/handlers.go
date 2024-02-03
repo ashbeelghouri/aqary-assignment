@@ -46,14 +46,23 @@ func (h *UserHandler) CreateUser(c *gin.Context) {
 	var newUser *CreateUserInput
 
 	if err := c.ShouldBindJSON(&newUser); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request data"})
+		c.JSON(http.StatusBadRequest, gin.H{
+			"status": false,
+			"error":  "Invalid request data",
+		})
 		return
 	}
-
-	_, err := h.store.GetUserByPhone(context.Background(), string(newUser.PhoneNumber))
+	tx, err := h.db.Begin(context.Background())
+	if err != nil {
+		log.Fatal(err)
+	}
+	_, err = h.store.GetUserByPhone(context.Background(), string(newUser.PhoneNumber))
 
 	if err == nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "phone number already exists"})
+		c.JSON(http.StatusBadRequest, gin.H{
+			"status": false,
+			"error":  "phone number already exists",
+		})
 		return
 	}
 
@@ -64,11 +73,16 @@ func (h *UserHandler) CreateUser(c *gin.Context) {
 
 	if err != nil {
 		log.Println(err)
-		c.JSON(http.StatusBadRequest, gin.H{"error": "unexpected error while creating user"})
+		c.JSON(http.StatusBadRequest, gin.H{
+			"status": false,
+			"error":  "unexpected error while creating user",
+		})
+		tx.Rollback(context.Background())
 		return
 	}
 
 	c.JSON(http.StatusOK, gin.H{
+		"status":  true,
 		"message": "user is created successfully",
 		"data":    userCreated,
 	})
@@ -78,14 +92,23 @@ func (h *UserHandler) GenerateOTP(c *gin.Context) {
 	var request *GenerateOTPInput
 
 	if err := c.BindJSON(&request); err != nil {
-		c.JSON(http.StatusNotFound, gin.H{"error": "Invalid request data"})
+		c.JSON(http.StatusNotFound, gin.H{
+			"status": false,
+			"error":  "Invalid request data",
+		})
 		return
 	}
-
-	_, err := h.store.GetUserByPhone(context.Background(), string(request.PhoneNumber))
+	tx, err := h.db.Begin(context.Background())
+	if err != nil {
+		log.Fatal(err)
+	}
+	_, err = h.store.GetUserByPhone(context.Background(), string(request.PhoneNumber))
 
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "phone number does not exists"})
+		c.JSON(http.StatusBadRequest, gin.H{
+			"status": false,
+			"error":  "phone number does not exists",
+		})
 		return
 	}
 
@@ -100,12 +123,15 @@ func (h *UserHandler) GenerateOTP(c *gin.Context) {
 	if err != nil {
 		log.Println(err)
 		c.JSON(http.StatusInternalServerError, gin.H{
-			"error": "Unexpected error occurred while creating OTP",
+			"status": false,
+			"error":  "Unexpected error occurred while creating OTP",
 		})
+		tx.Rollback(context.Background())
 		return
 	}
 
 	c.JSON(http.StatusOK, gin.H{
+		"status":  true,
 		"message": "otp is generated",
 		"data":    otp,
 	})
@@ -114,32 +140,44 @@ func (h *UserHandler) GenerateOTP(c *gin.Context) {
 func (h *UserHandler) VerifyOTP(c *gin.Context) {
 	var request *VerifyOTPInout
 	if err := c.BindJSON(&request); err != nil {
-		c.JSON(http.StatusNotFound, gin.H{"error": "Invalid request data"})
+		c.JSON(http.StatusNotFound, gin.H{
+			"status": false,
+			"error":  "Invalid request data",
+		})
 		return
 	}
-
 	userAccount, err := h.store.GetUserByPhone(context.Background(), request.PhoneNumber)
 
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "phone number does not exists"})
+		c.JSON(http.StatusBadRequest, gin.H{
+			"status": false,
+			"error":  "phone number does not exists",
+		})
 		return
 	}
 
 	otpProvided := pgtype.Text{String: request.Otp, Valid: true}
 
 	if userAccount.Otp != otpProvided {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid OTP"})
+		c.JSON(http.StatusBadRequest, gin.H{
+			"status": false,
+			"error":  "invalid OTP",
+		})
 		return
 	}
 
 	otpExpiry := userAccount.OtpExpirationTime.Time
 
 	if otpExpiry.Before(time.Now()) {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Your OTP has been expired"})
+		c.JSON(http.StatusBadRequest, gin.H{
+			"status": false,
+			"error":  "Your OTP has been expired",
+		})
 		return
 	}
 
 	c.JSON(http.StatusOK, gin.H{
+		"status":  true,
 		"message": "your OTP is valid",
 	})
 }
