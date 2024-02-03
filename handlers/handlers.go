@@ -2,13 +2,11 @@ package handlers
 
 import (
 	"context"
-	"fmt"
 	"log"
-	"math/rand"
 	"net/http"
-	"time"
 
 	"github.com/ashbeelghouri/aqary-assignment/internal/database"
+	"github.com/ashbeelghouri/aqary-assignment/utilities"
 	"github.com/gin-gonic/gin"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgtype"
@@ -111,9 +109,7 @@ func (h *UserHandler) GenerateOTP(c *gin.Context) {
 		})
 		return
 	}
-
-	rand.Seed(time.Now().UnixNano())
-	otp := fmt.Sprintf("%04d", rand.Intn(10000))
+	otp := utilities.GenerateOTP()
 
 	_, err = h.store.UpdateUserOTP(h.ctx, database.UpdateUserOTPParams{
 		PhoneNumber: request.PhoneNumber,
@@ -166,9 +162,7 @@ func (h *UserHandler) VerifyOTP(c *gin.Context) {
 		return
 	}
 
-	otpExpiry := userAccount.OtpExpirationTime.Time
-
-	if otpExpiry.Before(time.Now()) {
+	if utilities.IsOtpExpired(userAccount.OtpExpirationTime.Time) {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"status": false,
 			"error":  "Your OTP has been expired",
