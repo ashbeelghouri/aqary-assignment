@@ -4,6 +4,7 @@ import (
 	"context"
 	"log"
 	"net/http"
+	"sort"
 
 	"github.com/ashbeelghouri/aqary-assignment/internal/database"
 	"github.com/ashbeelghouri/aqary-assignment/utilities"
@@ -30,6 +31,10 @@ type GenerateOTPInput struct {
 type VerifyOTPInout struct {
 	PhoneNumber string `json:"phone_number"`
 	Otp         string `json:"otp"`
+}
+
+type RearrangeString struct {
+	Str string `json:"s"`
 }
 
 func NewUserHandler(db *pgx.Conn, store *database.Queries, ctx context.Context) *UserHandler {
@@ -173,5 +178,60 @@ func (h *UserHandler) VerifyOTP(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{
 		"status":  true,
 		"message": "your OTP is valid",
+	})
+}
+
+func ReArrangeString(c *gin.Context) {
+	var request *RearrangeString
+	if err := c.BindJSON(&request); err != nil {
+		c.JSON(http.StatusNotFound, gin.H{
+			"status": false,
+			"error":  "Invalid request data",
+		})
+		return
+	}
+
+	freq := make(map[rune]int)
+	for _, char := range request.Str {
+		freq[char]++
+	}
+
+	var sortedChars []rune
+
+	for char := range freq {
+		sortedChars = append(sortedChars, char)
+	}
+
+	sort.Slice(sortedChars, func(i, j int) bool {
+		return freq[sortedChars[i]] > freq[sortedChars[j]] || (freq[sortedChars[i]] == freq[sortedChars[j]] && sortedChars[i] < sortedChars[j])
+	})
+
+	if freq[sortedChars[0]] > (len(request.Str)+1)/2 {
+		c.JSON(http.StatusOK, gin.H{
+			"status":  true,
+			"data":    "",
+			"message": "re-arrangement not possible",
+		})
+	}
+
+	result := make([]rune, len(request.Str))
+
+	idx := 0
+	for _, char := range sortedChars {
+		count := freq[char]
+		for count > 0 {
+			result[idx] = char
+			idx += 2
+			if idx >= len(request.Str) {
+				idx = 1
+			}
+			count--
+		}
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"status":  true,
+		"data":    string(result),
+		"message": "re-arrangement done",
 	})
 }

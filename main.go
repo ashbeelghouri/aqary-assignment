@@ -56,8 +56,14 @@ func main() {
 			"msg": "connected",
 		})
 	})
+
+	// QUESTION 01
 	router.POST("/api/users", userHandler.CreateUser)
 	router.POST("/api/users/generateotp", userHandler.GenerateOTP)
 	router.POST("/api/users/verifyotp", userHandler.VerifyOTP)
+
+	// QUESTION 02
+
+	router.POST("/api/rearrange-string", handlers.ReArrangeString)
 	router.Run(":8080")
 }
