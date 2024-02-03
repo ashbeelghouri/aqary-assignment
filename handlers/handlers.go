@@ -212,6 +212,7 @@ func ReArrangeString(c *gin.Context) {
 			"data":    "",
 			"message": "re-arrangement not possible",
 		})
+		return
 	}
 
 	result := make([]rune, len(request.Str))
