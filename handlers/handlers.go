@@ -29,6 +29,11 @@ type GenerateOTPInput struct {
 	PhoneNumber string `json:"phone_number"`
 }
 
+type VerifyOTPInout struct {
+	PhoneNumber string `json:"phone_number"`
+	Otp         string `json:"otp"`
+}
+
 func NewUserHandler(db *pgx.Conn, store *database.Queries, ctx context.Context) *UserHandler {
 	return &UserHandler{
 		db:    db,
@@ -103,5 +108,38 @@ func (h *UserHandler) GenerateOTP(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{
 		"message": "otp is generated",
 		"data":    otp,
+	})
+}
+
+func (h *UserHandler) VerifyOTP(c *gin.Context) {
+	var request *VerifyOTPInout
+	if err := c.BindJSON(&request); err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "Invalid request data"})
+		return
+	}
+
+	userAccount, err := h.store.GetUserByPhone(context.Background(), request.PhoneNumber)
+
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "phone number does not exists"})
+		return
+	}
+
+	otpProvided := pgtype.Text{String: request.Otp, Valid: true}
+
+	if userAccount.Otp != otpProvided {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid OTP"})
+		return
+	}
+
+	otpExpiry := userAccount.OtpExpirationTime.Time
+
+	if otpExpiry.Before(time.Now()) {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Your OTP has been expired"})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"message": "your OTP is valid",
 	})
 }
