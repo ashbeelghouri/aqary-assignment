@@ -49,24 +49,6 @@ Solution to re-arrange the seat_id of every two consecutive students. If no of s
 
 GET "/api/swap-students"
 
-**Example**
-
-`Input`
-
-id | 1 | 2 | 3 | 4 | 5
---- | --- | --- | --- |--- |--- |---
-student | Abbot | Doris | Emerson | Green | Jeames 
-
-------------
-
-
-`Output`
-
-id | 1 | 2 | 3 | 4 | 5
---- | --- | --- | --- |--- |--- |---
-student | Doris | Abbot | Green | Emerson | Jeames 
-
-
 **Query**
 
 ``` 
