@@ -63,7 +63,23 @@ func main() {
 	router.POST("/api/users/verifyotp", userHandler.VerifyOTP)
 
 	// QUESTION 02
-
 	router.POST("/api/rearrange-string", handlers.ReArrangeString)
+
+	// Question 03
+	router.GET("/api/swap-students", func(c *gin.Context) {
+		studentSwapQuery, err := os.ReadFile("sql/student-swap-query.sql")
+
+		if err != nil {
+			c.JSON(http.StatusOK, gin.H{
+				"status": false,
+				"error":  "error while reading student-swap-query file",
+			})
+			return
+		}
+		c.JSON(http.StatusOK, gin.H{
+			"status": true,
+			"query":  string(studentSwapQuery),
+		})
+	})
 	router.Run(":8080")
 }

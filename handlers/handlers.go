@@ -208,7 +208,7 @@ func ReArrangeString(c *gin.Context) {
 
 	if freq[sortedChars[0]] > (len(request.Str)+1)/2 {
 		c.JSON(http.StatusOK, gin.H{
-			"status":  true,
+			"status":  false,
 			"data":    "",
 			"message": "re-arrangement not possible",
 		})
