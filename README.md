@@ -1,4 +1,4 @@
-# aqary-assignment
+# Golang Demo
 
 ### Note: 
 Install all the packages in the project and then run project by: 
